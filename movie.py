@@ -7,15 +7,19 @@ import matplotlib.animation as animation
 import numpy as np
 from scipy import interpolate
 
+from glob import glob
 from util import load_images, load_regions
-
+import os
+from scipy.misc import imread
+from PIL import Image
 
 def create_movie(dataset_path, output_path, outline=False, fps=30, dpi=100):
   """
   Creates a mp4 file.
   """
   
-  images = load_images(dataset_path)
+  files = sorted(glob(os.path.join(dataset_path, 'images/*.tiff')))
+  images = [Image.open(files[0])]
   fig = plt.figure()
   ax = fig.add_subplot(111)
   ax.set_aspect('equal')
@@ -45,17 +49,17 @@ def create_movie(dataset_path, output_path, outline=False, fps=30, dpi=100):
     
     images = np.array(mod_images)
     
-  im = ax.imshow(images[0])#,cmap='gray')
+  im = ax.imshow(images[0] ,cmap='gray')
   
   fig.set_size_inches([5,5])
   plt.tight_layout()
 
   def update_img(n):
-      tmp = images[n]
+      tmp = Image.open(files[n])
       im.set_data(tmp)
       return im
 
-  animator = animation.FuncAnimation(fig,update_img,len(images),interval=fps)
+  animator = animation.FuncAnimation(fig,update_img,len(files),interval=fps)
   writer = animation.writers['ffmpeg'](fps=fps)
   animator.save(output_path,writer=writer,dpi=dpi)
 
