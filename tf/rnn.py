@@ -5,12 +5,45 @@ import tensorflow as tf
 from tensorflow.models.rnn import rnn
 import time
 
-def add_inputs(tfrecords, feature_shape,
+def construct_windows(feature, label, input_length, num_steps, stride):
+  
+  feature_length = feature.shape[0]
+  num_frames = feature_length / input_length
+  window_length = input_length * num_steps
+  
+  windows = []
+  labels = []
+  for i in range(0, num_frames, stride):
+    start_index = i * input_length
+    end_index = (i + num_steps) * input_length
+    if end_index > feature_length :
+      break
+    x = feature[start_index:end_index]
+    windows.append(x)
+    labels.append(label)
+
+  windows = np.array(windows)
+  labels = np.array(labels)
+  
+  return [windows, labels]
+
+def add_inputs(tfrecords, feature_size,
+  build_windows=False, input_length=None, num_steps=None, stride=None,
   num_epochs=None, 
   batch_size=10,
   num_threads=2,
   capacity=100,
   min_after_dequeue=50):
+  """
+  We assume that the features are a raveled version of a patch for the entire
+  video sequence. At train time, we will want to limit the number of back prop steps. 
+  So we will need to create "windows" of the videos, each of size num_steps (i.e. the 
+  number of frames). The stride size dictates how much overlap the individual windows
+  will have with each other.  
+  
+  At test time, we don't need to do back prop, so we can just loop through all frames of
+  the video. 
+  """
   
   with tf.name_scope('inputs'):
 
@@ -28,28 +61,53 @@ def add_inputs(tfrecords, feature_shape,
     example = tf.parse_single_example(
       serialized_example,
       features = {
-        'feature'  : tf.FixedLenFeature(feature_shape, tf.float32),
-        'label' : tf.FixedLenFeature([], tf.int64),
+        'feature'  : tf.FixedLenFeature([feature_size], tf.float32),
+        'label' : tf.FixedLenFeature([], tf.int64)
       }
     )
 
     feature = example['feature']
-    print "Feature shape"
-    print feature.get_shape().as_list()
+    #print "Feature shape"
+    #print feature.get_shape().as_list()
     
     label = tf.cast(example['label'], tf.int32)
-    print "Label shape"
-    print label.get_shape().as_list()
+    #print "Label shape"
+    #print label.get_shape().as_list()
     
-    features, sparse_labels = tf.train.shuffle_batch(
-        [feature, label],
-        batch_size=batch_size,
-        num_threads=num_threads,
-        capacity= capacity, #batch_size * (num_threads + 2),
-        # Ensures a minimum amount of shuffling of examples.
-        min_after_dequeue= min_after_dequeue, # 3 * batch_size,
-      )
-    #sparse_labels = tf.reshape(sparse_labels, [-1])
+    if build_windows:
+      
+      window_data = tf.py_func(construct_windows, [feature, label, input_length, num_steps, stride], [tf.float32, tf.int32], name="construct_windows")
+      
+      window_features = window_data[0]
+      window_labels = window_data[1]
+      
+      # Trick to get tensorflow to set the shapes so that the enqueue process works
+      window_features.set_shape(tf.TensorShape([tf.Dimension(None), input_length * num_steps]))
+      window_features = tf.expand_dims(window_features, 0)
+      window_features = tf.squeeze(window_features, [0])
+      num_windows = window_features.get_shape().as_list()[0]
+      window_labels.set_shape(tf.TensorShape([tf.Dimension(num_windows)]))
+      
+      features, sparse_labels = tf.train.shuffle_batch(
+          [window_features, window_labels],
+          batch_size=batch_size,
+          num_threads=num_threads,
+          capacity= capacity, #batch_size * (num_threads + 2),
+          # Ensures a minimum amount of shuffling of examples.
+          min_after_dequeue= min_after_dequeue, # 3 * batch_size,
+          enqueue_many=True
+        )
+      
+    else:
+    
+      features, sparse_labels = tf.train.shuffle_batch(
+          [feature, label],
+          batch_size=batch_size,
+          num_threads=num_threads,
+          capacity= capacity, #batch_size * (num_threads + 2),
+          # Ensures a minimum amount of shuffling of examples.
+          min_after_dequeue= min_after_dequeue, # 3 * batch_size,
+        )
     
   return features, sparse_labels
 
@@ -139,7 +197,7 @@ def build(graph, input, num_steps, hidden_size, num_layers, num_classes, is_trai
     inputs = [tf.squeeze(input_) for input_ in tf.split(1, num_steps, input)]
     
     print "Inputs to RNN Cell shape:"
-    print "[%d, %s]" % (len(inputs), inputs[0].get_shape().as_list()[0])
+    print "[%d, %s]" % (len(inputs), inputs[0].get_shape().as_list())
     
     outputs, state = rnn.rnn(cell, inputs, initial_state = initial_state)
     
@@ -185,23 +243,25 @@ def train(tfrecords, save_dir, cfg):
     )
   )
   
+  max_iterations = cfg.max_iterations
   batch_size= cfg.batch_size
   input_size = cfg.input_size
-  num_steps = cfg.input_size
-
-  feature_shape = [input_size * num_steps]
+  num_steps = cfg.num_steps
+  frame_stride = cfg.frame_stride
+  feature_size = cfg.feature_size 
   
   # [batch_size, input_size * num_steps]
   #input = tf.placeholder(tf.float32, [batch_size, input_size * num_steps])
   # [batch_size * num_steps]
   #labels_sparse = tf.placeholder(tf.int32, [batch_size * num_steps])
   
-  inputs, labels_sparse = add_inputs(tfrecords, feature_shape,
+  inputs, labels_sparse = add_inputs(tfrecords, feature_size=feature_size,
+    build_windows=True, input_length=input_size, num_steps=num_steps, stride=frame_stride,
     num_epochs=None, 
     batch_size=batch_size,
     num_threads=2,
-    capacity=100,
-    min_after_dequeue=50
+    capacity=1000,
+    min_after_dequeue=100
   )
   
   print "Inputs shape"
@@ -266,7 +326,7 @@ def train(tfrecords, save_dir, cfg):
     
     try:
       step = global_step.eval()
-      while step < 2000:
+      while step < max_iterations:
         if coord.should_stop():
           break
 
