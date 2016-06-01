@@ -5,7 +5,7 @@ from skimage.util import view_as_blocks
 import tensorflow as tf
 
 import sys
-sys.path.append('..')
+sys.path.append('../..')
 from util import load_images, load_regions
 
 def _float_feature(value):
@@ -105,7 +105,7 @@ def create_patch(region, images, buffer, output_shape):
     
     return scaled_patch
       
-def generate_dataset(neurofinder_dataset_path, patch_dims, output_path, buffer=2, max_number_of_negatives=500):
+def generate_dataset(neurofinder_dataset_path, patch_dims, output_path, buffer=1, max_number_of_negatives=500):
   """
   neurofinder_dataset_path : path to a neurofinder dataset directory
   patch_dims : (height, width) for the desired patch size
