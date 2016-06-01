@@ -356,7 +356,7 @@ def train(tfrecords, save_dir, cfg):
   
   
   
-def test(tfrecords, model_path):
+def test(tfrecords, model_path, cfg):
    
   graph = tf.get_default_graph()
 
@@ -368,22 +368,24 @@ def test(tfrecords, model_path):
     )
   )
   
+  max_iterations = cfg.max_iterations
   batch_size= cfg.batch_size
   input_size = cfg.input_size
-  num_steps = cfg.input_size
-  feature_shape = [input_size * num_steps]
+  num_steps = cfg.num_steps
+  frame_stride = cfg.frame_stride
+  feature_size = cfg.feature_size 
   
   # [batch_size, input_size * num_steps]
   #input = tf.placeholder(tf.float32, [batch_size, input_size * num_steps])
   # [batch_size * num_steps]
   #labels_sparse = tf.placeholder(tf.int32, [batch_size * num_steps])
   
-  inputs, labels_sparse = add_inputs(tfrecords, feature_shape,
+  inputs, labels_sparse = add_inputs(tfrecords, feature_size,
     num_epochs=1, 
     batch_size=batch_size,
     num_threads=2,
     capacity=100,
-    min_after_dequeue=50
+    min_after_dequeue=0
   )
   
   #print "Inputs shape"
