@@ -105,13 +105,13 @@ def create_patch(region, images, buffer, output_shape):
     
     return scaled_patch
       
-def generate_dataset(neurofinder_dataset_path, patch_dims, output_path, buffer=1, max_number_of_negatives=500):
+def generate_dataset(neurofinder_dataset_path, patch_dims, buffer=1, max_number_of_negatives=500, output_path=None):
   """
   neurofinder_dataset_path : path to a neurofinder dataset directory
   patch_dims : (height, width) for the desired patch size
-  output_path : location to save the tfrecords file
   buffer : buffer to increase the size of the patch around a neuron
   max_number_of_negatives : the maximum number of negative patches to save
+  output_path : location to save the tfrecords file (or None if you don't want to save a tfrecords file)
   """
   images = load_images(neurofinder_dataset_path)
   regions = load_regions(neurofinder_dataset_path)
@@ -178,9 +178,10 @@ def generate_dataset(neurofinder_dataset_path, patch_dims, output_path, buffer=1
   print "Patch Dims: %s" % (patch_dims,)
   print "Feature size: %s" % (p_patches[0].shape,)
   
-  write_examples(features, labels, output_path)
+  if output_path != None:
+    write_examples(features, labels, output_path)
   
-  
+  return features, labels
   
   
   
