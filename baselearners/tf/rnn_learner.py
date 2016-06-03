@@ -279,7 +279,7 @@ class RNNLearner:
       var_dict = {}
       for v in self.restore_vars:
         n = v.name[6:]
-        if n == 'weights:0' or 'biases:0':
+        if n == 'weights:0' or n == 'biases:0':
           n = 'softmax/' + n
         var_dict[n] = v
       
