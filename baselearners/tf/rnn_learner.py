@@ -492,7 +492,7 @@ class RNNLearner:
         logits, state = self.session.run(
           [self.test_model.logits, self.test_model.final_state],
           {
-            self.test_model.input_data : [example]#[feature],
+            self.test_model.input_data : [example],#[feature],
             self.test_model.initial_state : state
           }
         )
