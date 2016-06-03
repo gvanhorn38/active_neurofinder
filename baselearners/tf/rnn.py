@@ -248,7 +248,8 @@ def train(tfrecords, save_dir, cfg):
   input_size = cfg.input_size
   num_steps = cfg.num_steps
   frame_stride = cfg.frame_stride
-  feature_size = cfg.feature_size 
+  feature_size = cfg.feature_size
+  num_layers = cfg.num_layers 
   
   # [batch_size, input_size * num_steps]
   #input = tf.placeholder(tf.float32, [batch_size, input_size * num_steps])
@@ -273,7 +274,7 @@ def train(tfrecords, save_dir, cfg):
   logits = build(graph, inputs, 
     num_steps = num_steps,
     hidden_size = input_size,
-    num_layers = 1,
+    num_layers = num_layers,
     num_classes = 2,
     is_training = True
   )

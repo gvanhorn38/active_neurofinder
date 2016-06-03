@@ -257,6 +257,8 @@ class RNNLearner:
       with tf.variable_scope("model", reuse=None):
         self.batch_train_model = RNNModel(is_training=True, cfg=cfg)
       
+      self.restore_vars = tf.trainable_variables()
+      
       cfg_update = copy.copy(cfg)
       cfg_update.batch_size = 1
       with tf.variable_scope("model", reuse=True):
@@ -269,7 +271,20 @@ class RNNLearner:
         self.test_model = RNNModel(is_training=False, cfg=cfg_test)
       
       tf.initialize_all_variables().run()
-
+  
+  def restore(self, model_path):
+    with self.graph.as_default(), self.session.as_default():
+      saver = tf.train.Saver(self.restore_vars)
+      saver.restore(self.session, model_path)
+  
+  def save(self, model_path):
+    with self.graph.as_default(), self.session.as_default():
+      saver = tf.train.Saver(self.restore_vars)
+      saver.save(
+        sess=self.session,
+        save_path=model_path)
+      )
+  
   def batch_train(self, examples, ground_truth):
     '''
     Train the model on a set of examples.
