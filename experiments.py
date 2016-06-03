@@ -24,7 +24,7 @@ def uncertainty_sampling_active_learner(base_learner, active_dataset_path, test_
     results = []
     query_counts = Counter()
 
-    for i in range(1, 2*len(train_labels)):
+    for i in range(1, 2*len(active_labels)):
         predictions = base_learner.batch_predict(active_features)
         query = np.argmin(np.abs(output[:,0] - output[:,1]))
         query_counts[query] += 1
