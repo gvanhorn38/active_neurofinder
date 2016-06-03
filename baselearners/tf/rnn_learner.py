@@ -52,8 +52,8 @@ def _variable_on_cpu(name, shape, initializer):
   """
   
   with tf.device('/cpu:0'):
-    #var = tf.get_variable(name, shape=shape, initializer=initializer)
-    var = tf.Variable(initial_value = initializer(shape), name=name)
+    var = tf.get_variable(name, shape=shape, initializer=initializer)
+    #var = tf.Variable(initial_value = initializer(shape), name=name)
   return var
 
 def _variable_with_weight_decay(name, shape, initializer, wd):
