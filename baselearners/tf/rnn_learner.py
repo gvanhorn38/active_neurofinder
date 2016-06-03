@@ -121,7 +121,7 @@ class RNNModel():
   
       gru_cell = tf.nn.rnn_cell.GRUCell(num_units=hidden_size, input_size=input_size)
   
-      if is_training and cfg.keep_prob < 1:
+      if is_training:# and cfg.keep_prob < 1:
         gru_cell = tf.nn.rnn_cell.DropoutWrapper(gru_cell, output_keep_prob=cfg.keep_prob)
   
       cell = tf.nn.rnn_cell.MultiRNNCell([gru_cell] * cfg.num_layers)
