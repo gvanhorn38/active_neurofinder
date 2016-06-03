@@ -502,7 +502,7 @@ class RNNLearner:
         
         all_logits.append(logits)
         
-    return all_logits
+    return np.array(all_logits).reshape([-1, 2]) # GVH: Hard coding number of classes
             
   def predict(self, example):
     
