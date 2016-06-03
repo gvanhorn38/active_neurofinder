@@ -282,7 +282,7 @@ class RNNLearner:
       saver = tf.train.Saver(self.restore_vars)
       saver.save(
         sess=self.session,
-        save_path=model_path)
+        save_path=model_path
       )
   
   def batch_train(self, examples, ground_truth):
