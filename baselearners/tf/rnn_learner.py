@@ -296,6 +296,7 @@ class RNNLearner:
     with self.graph.as_default(), self.session.as_default():
       
       global_step = tf.Variable(0, name='global_step', trainable=False)
+      step_incr = tf.count_up_to(global_step, cfg.max_iterations)
       
       lr = tf.train.exponential_decay(
         learning_rate=cfg.lr,
@@ -362,16 +363,14 @@ class RNNLearner:
           self.batch_train_model.assign_lr(self.session, lr.eval())
           t = time.time()
           fetched = self.session.run(
-            [self.batch_train_model.loss, lr, self.batch_train_model.train_op],
+            [self.batch_train_model.loss, lr, self.batch_train_model.train_op, step_incr],
             {
               self.batch_train_model.input_data : features.eval(),
               self.batch_train_model.targets : sparse_labels.eval()
             }
           )
           dt = time.time() - t
-
-          # increment the global step counter
-          global_step = global_step + 1
+          
           step = global_step.eval()
 
           print print_str % (step, fetched[0], fetched[1], (dt / cfg.batch_size) * 1000)
