@@ -278,7 +278,10 @@ class RNNLearner:
       # quick patch to make this match the rnn.py model
       var_dict = {}
       for v in self.restore_vars:
-        var_dict[v.name[6:]] = v
+        n = v.name[6:]
+        if n == 'weights:0' or 'biases:0':
+          n = 'softmax/' + n
+        var_dict[n] = v
       
       saver = tf.train.Saver(var_dict)
       saver.restore(self.session, model_path)
