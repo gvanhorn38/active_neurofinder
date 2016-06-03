@@ -410,7 +410,7 @@ class RNNLearner:
         
         
 
-  def update(self, example, ground_truth):
+  def update(self, example, ground_truth, lr=0.05, verbose=False):
     '''
     Update the model based on one new example.
 
@@ -423,7 +423,6 @@ class RNNLearner:
           
     '''
     cfg = self.params
-    lr = 1. # ????
     
     print_str = ', '.join([
       'Step: %d',
@@ -453,11 +452,12 @@ class RNNLearner:
         )
         dt = time.time() - t
         
-        print print_str % (i, fetched[0], lr, (dt / 1.) * 1000)
+        if verbose:
+          print print_str % (i, fetched[0], lr, (dt / 1.) * 1000)
         
   
   # we'll need batches here. 
-  def batch_predict(self, examples):
+  def batch_predict(self, examples, verbose=False):
     '''
     Make predictions about locations of neurons in a series of training examples
     
@@ -498,7 +498,8 @@ class RNNLearner:
         )
         dt = time.time() - t
         
-        print print_str % (i, (dt / 1.) * 1000)
+        if verbose:
+          print print_str % (i, (dt / 1.) * 1000)
         
         all_logits.append(logits)
         
