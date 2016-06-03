@@ -6,7 +6,7 @@ import cPickle as pickle
 
 #train_features, train_labels = load_dataset.load_dataset(['/home/gvanhorn/Desktop/neuron_trial/datasets/neurofinder.00.00.tfrecords'], 680400)
 
-active_features, active_labels = load_dataset.load_dataset('/home/gvanhorn/Desktop/neuron_trial/datasets/neurofinder.00.01.tfrecords', 685800)
+active_features, active_labels = load_dataset.load_dataset(['/home/gvanhorn/Desktop/neuron_trial/datasets/neurofinder.00.01.tfrecords'], 685800)
 
 test_features, test_labels = load_dataset.load_dataset(['/home/gvanhorn/Desktop/neuron_trial/datasets/neurofinder.00.02.tfrecords'], 693000)
 
@@ -22,9 +22,9 @@ cfg.num_threads = 4
 cfg.capacity = 1000
 cfg.min_after_dequeue = 100
 
-r = rnn_learner.RNNLearner(cfg)
+base_learner = rnn_learner.RNNLearner(cfg)
 
-r.restore('/home/gvanhorn/Desktop/neuron_trial/pretrained')
+base_learner.restore('/home/gvanhorn/Desktop/neuron_trial/pretrained/model-5000')
 
 #r.batch_train(train_features, train_labels)
 

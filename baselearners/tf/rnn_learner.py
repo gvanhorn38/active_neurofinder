@@ -266,7 +266,7 @@ class RNNLearner:
       
       cfg_test = copy.copy(cfg)
       cfg_test.batch_size = 1
-      cfg_test.num_steps = 1
+      cfg_test.num_steps = 3048 # GVH: Hack to get an experiment done
       with tf.variable_scope("model", reuse=True):
         self.test_model = RNNModel(is_training=False, cfg=cfg_test)
       
@@ -478,22 +478,24 @@ class RNNLearner:
     
     with self.graph.as_default(), self.session.as_default():
       
+      initial_state = self.test_model.initial_state.eval()
+      
       for i in range(examples.shape[0]):
         
         example = examples[i]
       
         # we want to loop over each frame 
-        features = example.reshape((-1, cfg.input_size))
-        state = self.test_model.initial_state.eval()
+        #features = example.reshape((-1, cfg.input_size))
+        state = initial_state
         t = time.time()   
-        for feature in features:
-          logits, state = self.session.run(
-            [self.test_model.logits, self.test_model.final_state],
-            {
-              self.test_model.input_data : [feature],
-              self.test_model.initial_state : state
-            }
-          )
+        #for feature in features:
+        logits, state = self.session.run(
+          [self.test_model.logits, self.test_model.final_state],
+          {
+            self.test_model.input_data : [example]#[feature],
+            self.test_model.initial_state : state
+          }
+        )
         dt = time.time() - t
         
         print print_str % (i, (dt / 1.) * 1000)
