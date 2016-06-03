@@ -274,7 +274,13 @@ class RNNLearner:
   
   def restore(self, model_path):
     with self.graph.as_default(), self.session.as_default():
-      saver = tf.train.Saver(self.restore_vars)
+      
+      # quick patch to make this match the rnn.py model
+      var_dict = {}
+      for v in self.restore_vars:
+        var_dict[v.name[6:]] = v
+      
+      saver = tf.train.Saver(var_dict)
       saver.restore(self.session, model_path)
   
   def save(self, model_path):
