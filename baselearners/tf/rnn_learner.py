@@ -281,7 +281,7 @@ class RNNLearner:
         n = v.name[6:]
         if n == 'weights:0' or n == 'biases:0':
           n = 'softmax/' + n
-        var_dict[n] = v
+        var_dict[n[:-2]] = v
       
       saver = tf.train.Saver(var_dict)
       saver.restore(self.session, model_path)
