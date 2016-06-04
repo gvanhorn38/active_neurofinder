@@ -165,7 +165,9 @@ class RNNModel():
       graph.add_to_collection('softmax_params', biases)
 
       self._logits = tf.nn.xw_plus_b(features, weights, biases, name="logits") 
-    
+      
+      self._softmax = tf.nn.softmax(self._logits)
+      
     # Add loss
     with graph.name_scope('loss'):
 
@@ -238,6 +240,10 @@ class RNNModel():
   @property
   def logits(self):
     return self._logits
+  
+  @property
+  def softmax(self):
+    return self._softmax
 
 
 class RNNLearner:
@@ -469,7 +475,7 @@ class RNNLearner:
     '''
     
     cfg = self.params
-    all_logits = []
+    all_softmax = []
     
     print_str = ', '.join([
       'Step: %d',
@@ -489,8 +495,8 @@ class RNNLearner:
         state = initial_state
         t = time.time()   
         #for feature in features:
-        logits, state = self.session.run(
-          [self.test_model.logits, self.test_model.final_state],
+        softmax, state = self.session.run(
+          [self.test_model.softmax, self.test_model.final_state],
           {
             self.test_model.input_data : [example],#[feature],
             self.test_model.initial_state : state
@@ -501,9 +507,9 @@ class RNNLearner:
         if verbose:
           print print_str % (i, (dt / 1.) * 1000)
         
-        all_logits.append(logits)
+        all_softmax.append(softmax)
         
-    return np.array(all_logits).reshape([-1, 2]) # GVH: Hard coding number of classes
+    return np.array(all_softmax).reshape([-1, 2]) # GVH: Hard coding number of classes
             
   def predict(self, example):
     
